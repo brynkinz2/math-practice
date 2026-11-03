@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sharpen">
+<title>Sharpen</title>
+<link rel="apple-touch-icon" id="ati">
+<link rel="manifest" id="mf">
+<style>
+:root{--bg:#07070d;--card:#0f0f1b;--line:#24243c;--tx:#eef0ff;--mut:#8b90b3;--cy:#22e4ff;--mg:#ff3df0;--lm:#b8ff2e;--pu:#9b6bff;--good:#2dffa0;--bad:#ff5c7a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+body{min-height:100dvh;background:radial-gradient(520px 380px at 90% -5%,#2b0f4c66,transparent),radial-gradient(480px 380px at -10% 105%,#00334d77,transparent),var(--bg);overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+sup{font-size:.6em;line-height:0}
+.wrap{max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 18px calc(env(safe-area-inset-bottom,0px) + 20px);min-height:100dvh;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,var(--cy),var(--mg));-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content}
+.sub{color:var(--mut);margin:2px 0 0;font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.big{display:flex;align-items:baseline;gap:8px}
+.big b{font-size:3.4rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 24px #22e4ff88}
+.big span{color:var(--mut);font-size:1.2rem}
+.bar{height:12px;border-radius:99px;background:#1a1a2c;overflow:hidden;margin:14px 0 10px}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--cy),var(--mg));box-shadow:0 0 16px var(--mg);transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.row{display:flex;justify-content:space-between;gap:10px;color:var(--mut);font-size:.9rem}
+.row .st{color:var(--lm);font-weight:700}
+.warm{color:var(--cy);font-size:.9rem;margin:10px 0 0}
+.tiles{display:grid;gap:12px}
+.tile{--c:var(--cy);text-align:left;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:16px;padding:16px;display:grid;grid-template-columns:1fr auto;gap:2px 12px;transition:transform .12s,box-shadow .2s}
+.tile:active{transform:scale(.98);box-shadow:0 0 26px color-mix(in srgb,var(--c) 40%,transparent)}
+.tile strong{font-size:1.15rem;color:var(--c)}
+.tile small{color:var(--mut);grid-column:1}
+.tile .pt{grid-row:1/3;grid-column:2;text-align:right;align-self:center;color:var(--tx);font-weight:700;font-size:.9rem}
+.pips{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+.pips b{width:14px;height:5px;border-radius:3px;background:#2a2a42}
+.pips b.on{background:var(--c,var(--cy));box-shadow:0 0 8px var(--c,var(--cy))}
+.foot{margin-top:auto;display:flex;justify-content:center;padding-top:8px}
+.ghost{background:none;border:1px solid var(--line);border-radius:12px;padding:8px 14px;color:var(--mut)}
+
+#quiz{--c:var(--cy);flex:1;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;align-items:center;gap:12px}
+.top #tname{font-weight:700;color:var(--c);flex:1}
+.top .ghost{padding:6px 12px;font-size:1.1rem;line-height:1}
+.plab{display:flex;justify-content:space-between;color:var(--mut);font-size:.9rem;margin-top:-6px;min-height:1.3em}
+#combo{color:var(--lm);font-weight:700}
+.qbox{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 0;min-height:120px}
+#q{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:clamp(1.9rem,9vw,2.6rem);font-weight:700;color:var(--tx);text-shadow:0 0 22px color-mix(in srgb,var(--c) 55%,transparent);overflow-wrap:anywhere}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#opts button{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:1.35rem;font-weight:700;padding:20px 8px;border-radius:16px;background:var(--card);border:1.5px solid var(--line);transition:transform .1s,opacity .2s,border-color .2s}
+#opts button:active{transform:scale(.96);border-color:var(--c)}
+#opts.locked button{pointer-events:none}
+#opts.locked button:not(.good):not(.bad){opacity:.35}
+#opts button.good{border-color:var(--good);background:#2dffa01c;box-shadow:0 0 24px #2dffa066;animation:bump .35s}
+#opts button.bad{border-color:var(--bad);background:#ff5c7a18}
+@keyframes bump{40%{transform:scale(1.07)}}
+#fb{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:8px}
+#fbt{font-weight:700;color:var(--bad)}
+#why{color:var(--tx);line-height:1.5;font-size:1rem}
+#next{margin-top:4px;padding:14px;border-radius:14px;border:0;font-weight:800;font-size:1.05rem;color:#07070d;background:linear-gradient(90deg,var(--cy),var(--mg))}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-10px);background:#17172b;border:1px solid var(--pu);color:var(--tx);padding:8px 16px;border-radius:99px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:30;box-shadow:0 0 20px #9b6bff66;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+#glow{position:fixed;inset:0;pointer-events:none;z-index:20}
+#glow.on{animation:glow .6s ease-out}
+@keyframes glow{from{box-shadow:inset 0 0 110px 8px rgba(45,255,160,.5)}to{box-shadow:inset 0 0 110px 8px rgba(45,255,160,0)}}
+.pop{position:fixed;transform:translate(-50%,-50%);font-weight:800;font-size:1.8rem;color:var(--good);text-shadow:0 0 14px var(--good);pointer-events:none;z-index:45;animation:rise .9s ease-out forwards}
+@keyframes rise{to{transform:translate(-50%,-150px);opacity:0}}
+#goal{position:fixed;inset:0;z-index:35;background:#07070dea;display:flex;align-items:center;justify-content:center;padding:24px}
+#goal .card{text-align:center;max-width:340px;width:100%;border-color:var(--mg);box-shadow:0 0 40px #ff3df044;display:grid;gap:12px}
+#goal h2{margin:0;font-size:2rem;background:linear-gradient(90deg,var(--lm),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
+#goal p{margin:0;color:var(--mut)}
+#goal button{padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:700}
+#goal button.main{border:0;color:#07070d;background:linear-gradient(90deg,var(--cy),var(--mg))}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}#glow.on,.pop,#opts button.good{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="home">
+    <h1>Sharpen</h1>
+    <p class="sub">A few minutes a day. Hit 100 points.</p>
+    <div class="card" style="margin-top:16px">
+      <div class="big"><b id="pn">0</b><span>/ 100</span></div>
+      <div class="bar"><i id="hfill"></i></div>
+      <div class="row"><span id="gmsg"></span><span class="st" id="strk"></span></div>
+      <p class="warm" id="warm" hidden>New day. Questions start one notch easier so you can warm up.</p>
+    </div>
+    <div class="tiles" id="tiles" style="margin-top:16px"></div>
+    <div class="foot"><button class="ghost" id="vib"></button></div>
+  </section>
+
+  <section id="quiz" hidden>
+    <div class="top"><button class="ghost" id="back" aria-label="Back to home">✕</button><div id="tname"></div><div id="tlv"></div></div>
+    <div class="bar"><i id="qfill"></i></div>
+    <div class="plab"><span id="qpts"></span><span id="combo"></span></div>
+    <div class="qbox"><div id="q"></div></div>
+    <div id="opts"></div>
+    <div id="fb" hidden><div id="fbt"></div><div id="why"></div><button id="next">Next question</button></div>
+  </section>
+</div>
+
+<div id="goal" hidden>
+  <div class="card">
+    <h2>Daily goal hit</h2>
+    <p id="gtxt"></p>
+    <button class="main" id="keep">Keep going</button>
+    <button id="done">Done for today</button>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="glow"></div>
+<canvas id="fx"></canvas>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[R(0,a.length-1)];
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const sg=n=>n<0?'−'+(-n):''+n;
+const pr=n=>n<0?'('+sg(n)+')':sg(n);
+const pw=(b,e)=>e===1?b:`${b}<sup>${e}</sup>`;
+const mono=(c,x=0,y=0)=>{const v=(x?pw('x',x):'')+(y?pw('y',y):'');if(!v)return sg(c);return c===1?v:c===-1?'−'+v:sg(c)+v};
+
+/* ---------- question makers ---------- */
+function mk(q,ans,wr,why,fill){
+  let w=[...new Set(wr)].filter(s=>s!==ans);
+  for(let i=1;w.length<3;i++){const f=fill(i);if(f!==ans&&!w.includes(f))w.push(f)}
+  w=shuf(w).slice(0,3);
+  const o=shuf([ans,...w]);
+  return{q,o,c:o.indexOf(ans),why};
+}
+const G={
+neg(l){
+  const m=[9,20,50][l-1],s=()=>Math.random()<.5?-1:1;
+  const a=R(1,m)*s();let b=R(1,m)*(Math.random()<.6?-1:1);const op=pick(['+','−']);
+  if(op==='+'&&a>0&&b>0)b=-b;
+  const c=op==='+'?b:-b,v=a+c;
+  const flip=op==='+'?a-b:a+b;
+  const why=(op==='−'?`Subtracting is adding the opposite: ${sg(a)} + ${pr(-b)}. `:'')+
+    (Math.sign(a)===Math.sign(c)?'Same signs: add the sizes and keep the sign.':'Different signs: subtract the sizes and keep the sign of the bigger one.');
+  return mk(`${sg(a)} ${op} ${pr(b)}`,sg(v),[sg(flip),sg(-v),sg(v+2),sg(v-2),sg(v+10)],why,i=>sg(v+(i%2?i+2:-(i+2))));
+},
+mul(l){
+  const m=[6,9,12][l-1],p=[.2,.35,.5][l-1];
+  const a=R(2,m),b=R(2,m);let sa=a,sb=b;
+  if(Math.random()<p){const r=Math.random();if(r<.4)sa=-a;else if(r<.8)sb=-b;else{sa=-a;sb=-b}}
+  const v=sa*sb,s=v<0?-1:1,neg=sa<0||sb<0;
+  const why=`${a} × ${b} = ${a*b}.`+(neg?` ${v<0?'Different signs → negative':'Two negatives → positive'}: ${sg(v)}.`:'');
+  return mk(`${sg(sa)} × ${pr(sb)}`,sg(v),[sg(-v),sg(s*(a+1)*b),sg(s*a*(b+1)),sg(s*(a-1)*b),sg(s*a*(b-1))],why,i=>sg(v+(i%2?i:-i)));
+},
+exp(l){
+  const T={
+  t1(){const a=R(2,5),b=R(2,5);return[`${pw('x',a)} · ${pw('x',b)}`,[1,a+b],[[1,a*b],[1,a+b+1],[1,a+b-1],[2,a+b]],`Same base, multiplying → add the exponents: ${a} + ${b} = ${a+b}.`]},
+  t2(){const a=R(2,4),b=R(2,4);return[`(${pw('x',a)})<sup>${b}</sup>`,[1,a*b],[[1,a+b],[1,a*b+1],[1,a*b-1],[1,a]],`Power of a power → multiply the exponents: ${a} × ${b} = ${a*b}.`]},
+  t3(){const b=R(2,4),a=b+R(1,4);return[`${pw('x',a)} ÷ ${pw('x',b)}`,[1,a-b],[[1,a+b],[1,a*b],[1,a-b+1],[1,a-b-1]],`Same base, dividing → subtract the exponents: ${a} − ${b} = ${a-b}.`]},
+  t4(){const k=R(2,4),n=k===4?2:R(2,3);return[`(${k}x)<sup>${n}</sup>`,[k**n,n],[[k,n],[k*n,n],[k**n,1],[k*n,1]],`The exponent hits the number AND the x: ${k}<sup>${n}</sup> = ${k**n}, so it's ${mono(k**n,n)}.`]},
+  t5(){const k=R(2,3),a=R(2,3),n=k===3?2:R(2,3);return[`(${k}${pw('x',a)})<sup>${n}</sup>`,[k**n,a*n],[[k,a*n],[k*n,a*n],[k**n,a+n],[k**n,a]],`The exponent hits everything inside: ${k}<sup>${n}</sup> = ${k**n}, and ${a} × ${n} = ${a*n} for the x.`]},
+  t6(){const k=R(2,4)*(Math.random()<.4?-1:1),m=R(2,4),a=R(1,3),b=R(1,3);return[`${sg(k)}${pw('x',a)} · ${m}${pw('x',b)}`,[k*m,a+b],[[-k*m,a+b],[k*m,a*b],[k+m,a+b],[k*m,a+b+1]],`Multiply the numbers: ${sg(k)} × ${m} = ${sg(k*m)}. Add the exponents: ${a} + ${b} = ${a+b}.`]},
+  t7(){const k=R(2,3),n=R(2,3),c=(-k)**n;return[`(−${k}x)<sup>${n}</sup>`,[c,n],[[-c,n],[-k*n,n],[k*n,n],[c,1]],`Negative to an even power is positive, to an odd power is negative: (−${k})<sup>${n}</sup> = ${sg(c)}, so it's ${mono(c,n)}.`]},
+  t8(){const a=R(1,3),b=R(1,3),n=R(2,3);return[`(${pw('x',a)}${pw('y',b)})<sup>${n}</sup>`,[1,a*n,b*n],[[1,a+n,b+n],[1,a*n,b],[1,a,b*n],[1,a*n,b+n]],`Multiply every exponent by ${n}: x gets ${a} × ${n} = ${a*n}, y gets ${b} × ${n} = ${b*n}.`]}
+  };
+  const pool=[['t1','t2','t3'],['t1','t2','t3','t4','t6','t7'],['t3','t4','t5','t6','t7','t8']][l-1];
+  const [q,A,W,why]=T[pick(pool)]();
+  return mk(q,mono(...A),W.map(w=>mono(...w)),why,i=>mono(A[0],A[1]+i,A[2]));
+}};
+
+/* ---------- state ---------- */
+const PTS={neg:2,mul:5,exp:10},GOAL=100;
+const NAME={neg:'Negatives',mul:'Multiplication',exp:'Exponents',mix:'Mixed'};
+const COL={neg:'var(--cy)',mul:'var(--mg)',exp:'var(--lm)',mix:'var(--pu)'};
+const dstr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const TODAY=dstr(new Date()),yd=new Date();yd.setDate(yd.getDate()-1);const YEST=dstr(yd);
+let S={date:TODAY,pts:0,lv:{neg:1,mul:1,exp:1},streak:0,lastGoal:'',goalHit:false,vib:true},warm=false,o=null;
+try{o=JSON.parse(localStorage.getItem('sharpen.v1')||'null')}catch(e){}
+if(o){S=Object.assign(S,o);S.lv=Object.assign({neg:1,mul:1,exp:1},o.lv)}
+if(o&&o.date!==TODAY){warm=true;for(const k in S.lv)S.lv[k]=Math.max(1,S.lv[k]-1);S.pts=0;S.goalHit=false;S.date=TODAY}
+if(S.lastGoal&&S.lastGoal!==TODAY&&S.lastGoal!==YEST)S.streak=0;
+const save=()=>{try{localStorage.setItem('sharpen.v1',JSON.stringify(S))}catch(e){}};
+save();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&dstr(new Date())!==TODAY)location.reload()});
+
+/* ---------- effects ---------- */
+const cv=$('#fx'),cx=cv.getContext('2d');let P=[],raf=0,W=0,H=0;
+function size(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0)}
+size();addEventListener('resize',size);
+const CC=['#22e4ff','#ff3df0','#b8ff2e','#9b6bff','#ffd23d','#ffffff'];
+function burst(x,y,n){
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,s=R(4,14);P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,w:R(5,10),h:R(3,6),r:Math.random()*6,vr:(Math.random()-.5)*.4,c:pick(CC),l:R(40,70)})}
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(){
+  cx.clearRect(0,0,W,H);P=P.filter(p=>p.l>0&&p.y<H+20);
+  for(const p of P){p.vy+=.45;p.vx*=.98;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l--;
+    cx.save();cx.globalAlpha=Math.min(1,p.l/20);cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.shadowColor=p.c;cx.shadowBlur=8;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore()}
+  raf=P.length?requestAnimationFrame(tick):0;if(!P.length)cx.clearRect(0,0,W,H);
+}
+function pop(x,y,t){const d=document.createElement('div');d.className='pop';d.textContent=t;d.style.left=x+'px';d.style.top=y+'px';document.body.appendChild(d);d.addEventListener('animationend',()=>d.remove());setTimeout(()=>d.remove(),1200)}
+function flash(){const g=$('#glow');g.classList.remove('on');void g.offsetWidth;g.classList.add('on')}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1600)}
+const buzz=n=>{if(S.vib&&navigator.vibrate)try{navigator.vibrate(n)}catch(e){}};
+
+/* ---------- home ---------- */
+const pips=t=>`<span class="pips" style="--c:${COL[t]}">${[1,2,3].map(i=>`<b class="${i<=S.lv[t]?'on':''}"></b>`).join('')}</span>`;
+const TILES=[['neg','Add and subtract with negatives','2 pts'],['mul','Times tables up to 12 × 12','5 pts'],['exp','Distributing and combining exponents','10 pts'],['mix','All three, evenly mixed','2 / 5 / 10 pts']];
+function home(){
+  $('#pn').textContent=Math.min(S.pts,GOAL);
+  $('#hfill').style.width=Math.min(100,S.pts/GOAL*100)+'%';
+  $('#gmsg').textContent=S.goalHit?'Goal done. Extra points are bonus.':`${Math.max(0,GOAL-S.pts)} points to go`;
+  $('#strk').textContent=S.streak?`${S.streak}-day streak`:'Start a streak today';
+  $('#warm').hidden=!(warm&&S.pts===0);
+  $('#tiles').innerHTML=TILES.map(([t,d,p])=>`<button class="tile" data-m="${t}" style="--c:${COL[t]}"><strong>${NAME[t]}${t==='mix'?'':pips(t)}</strong><small>${d}</small><span class="pt">${p}</span></button>`).join('');
+  $('#vib').textContent='Vibration: '+(S.vib?'on':'off');
+}
+$('#tiles').addEventListener('click',e=>{const b=e.target.closest('.tile');if(b)start(b.dataset.m)});
+$('#vib').onclick=()=>{S.vib=!S.vib;save();home();if(S.vib)buzz(30)};
+const show=id=>{$('#home').hidden=id!=='home';$('#quiz').hidden=id!=='quiz'};
+
+/* ---------- quiz ---------- */
+let cur=null,qd=null,bag=[];
+function start(m){cur={m,combo:0,cs:{neg:0,mul:0,exp:0},ws:{neg:0,mul:0,exp:0},t:null,lock:false};bag=[];show('quiz');window.scrollTo(0,0);nextQ()}
+function nextQ(){
+  let t=cur.m;if(t==='mix'){if(!bag.length)bag=shuf(['neg','mul','exp']);t=bag.pop()}
+  cur.t=t;qd=G[t](S.lv[t]);cur.lock=false;
+  $('#quiz').style.setProperty('--c',COL[t]);
+  $('#tname').textContent=NAME[t];
+  $('#q').innerHTML=qd.q;
+  $('#opts').className='';
+  $('#opts').innerHTML=qd.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('');
+  $('#fb').hidden=true;qbar();
+}
+function mult(){return cur.combo>=5?3:cur.combo>=3?2:1}
+function qbar(){
+  $('#qfill').style.width=Math.min(100,S.pts/GOAL*100)+'%';
+  $('#qpts').textContent=`${Math.min(S.pts,GOAL)} / ${GOAL}`;
+  $('#combo').textContent=cur.combo>=2?`${cur.combo} in a row`+(mult()>1?` · ×${mult()} points`:''):'';
+  $('#tlv').innerHTML=pips(cur.t);
+}
+$('#opts').addEventListener('click',e=>{const b=e.target.closest('button');if(b)answer(+b.dataset.i,b)});
+function answer(i,btn){
+  if(cur.lock)return;cur.lock=true;
+  const t=cur.t,ok=i===qd.c,bs=[...$('#opts').children];
+  $('#opts').classList.add('locked');
+  if(ok){
+    cur.combo++;cur.ws[t]=0;
+    const mu=mult(),p=PTS[t]*mu;S.pts+=p;
+    btn.classList.add('good');
+    const r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    burst(x,y,26+mu*14);pop(x,y,'+'+p);flash();buzz(25);
+    if(++cur.cs[t]>=3){cur.cs[t]=0;if(S.lv[t]<3){S.lv[t]++;toast('Level up')}}
+    else if(cur.combo===3)toast('Combo: double points');
+    else if(cur.combo===5)toast('Combo: triple points');
+    const tok=cur;
+    if(!S.goalHit&&S.pts>=GOAL){
+      S.goalHit=true;S.streak=S.lastGoal===YEST?S.streak+1:1;S.lastGoal=TODAY;save();qbar();setTimeout(()=>{if(cur===tok)goal()},650);return;
+    }
+    save();qbar();
+    setTimeout(()=>{if(cur===tok&&!$('#quiz').hidden)nextQ()},950);
+  }else{
+    cur.combo=0;cur.cs[t]=0;
+    if(++cur.ws[t]>=2&&S.lv[t]>1){S.lv[t]--;cur.ws[t]=0;toast('Easing up a notch')}
+    btn.classList.add('bad');bs[qd.c].classList.add('good');save();qbar();
+    $('#fbt').textContent=pick(['Not quite. Here’s the trick.','Close. Here’s how it works.','Almost. Check this out.']);
+    $('#why').innerHTML=`Answer: <b>${qd.o[qd.c]}</b><br>${qd.why}`;
+    $('#fb').hidden=false;
+  }
+}
+$('#next').onclick=()=>nextQ();
+$('#back').onclick=()=>{cur=null;home();show('home')};
+
+/* ---------- daily goal ---------- */
+function goal(){
+  $('#gtxt').textContent=S.streak>1?`${S.streak} days in a row. Keep it alive tomorrow.`:'Streak started. Come back tomorrow to keep it going.';
+  $('#goal').hidden=false;
+  [0,250,500,750].forEach(d=>setTimeout(()=>burst(R(60,W-60),R(80,H*.45),70),d));buzz([40,60,40]);
+}
+$('#keep').onclick=()=>{$('#goal').hidden=true;if(cur)nextQ()};
+$('#done').onclick=()=>{$('#goal').hidden=true;cur=null;home();show('home')};
+
+/* ---------- home screen icon + manifest ---------- */
+function icon(sz){
+  const c=document.createElement('canvas');c.width=c.height=sz;const g=c.getContext('2d');
+  g.fillStyle='#07070d';g.fillRect(0,0,sz,sz);
+  const rg=g.createRadialGradient(sz*.75,sz*.2,0,sz*.75,sz*.2,sz*.9);rg.addColorStop(0,'#3a1066');rg.addColorStop(1,'#07070d');g.fillStyle=rg;g.fillRect(0,0,sz,sz);
+  const lg=g.createLinearGradient(0,0,sz,sz);lg.addColorStop(0,'#22e4ff');lg.addColorStop(1,'#ff3df0');
+  g.fillStyle=lg;g.shadowColor='#22e4ff';g.shadowBlur=sz*.06;g.font=`800 ${sz*.52}px -apple-system,system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';
+  g.fillText('x²',sz/2,sz*.54);
+  return c.toDataURL('image/png');
+}
+try{
+  $('#ati').href=icon(180);
+  const m={name:'Sharpen',short_name:'Sharpen',display:'standalone',background_color:'#07070d',theme_color:'#07070d',start_url:location.href.split('#')[0].split('?')[0],icons:[{src:icon(192),sizes:'192x192',type:'image/png'},{src:icon(512),sizes:'512x512',type:'image/png'}]};
+  $('#mf').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
+}catch(e){}
+
+home();
+})();
+</script>
+</body>
+</html>
