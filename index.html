@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" id="ati">
 <link rel="manifest" id="mf">
 <style>
-:root{--bg:#07070d;--card:#0f0f1b;--line:#24243c;--tx:#eef0ff;--mut:#8b90b3;--cy:#22e4ff;--mg:#ff3df0;--lm:#b8ff2e;--pu:#9b6bff;--good:#2dffa0;--bad:#ff5c7a}
+:root{--bg:#07070d;--card:#0f0f1b;--line:#24243c;--tx:#eef0ff;--mut:#8b90b3;--cy:#22e4ff;--mg:#ff3df0;--lm:#b8ff2e;--pu:#9b6bff;--good:#2dffa0;--bad:#ff5c7a;--or:#ffa63d;--bl:#5b8cff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
@@ -77,6 +77,25 @@ h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em;background:line
 #goal p{margin:0;color:var(--mut)}
 #goal button{padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:700}
 #goal button.main{border:0;color:#07070d;background:linear-gradient(90deg,var(--cy),var(--mg))}
+.tile .tb{grid-column:1/3;height:6px;border-radius:99px;background:#1a1a2c;margin-top:8px;overflow:hidden}
+.tile .tb i{display:block;height:100%;background:var(--c);box-shadow:0 0 10px var(--c);border-radius:99px;transition:width .5s}
+.tile.done{box-shadow:0 0 18px color-mix(in srgb,var(--c) 35%,transparent)}
+.tile.done .pt{color:var(--good)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.chip{display:grid;gap:8px;justify-items:center;padding:16px 6px 12px;border-radius:14px;background:var(--card);border:1.5px solid var(--line)}
+.chip b{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:1.3rem}
+.chip:active{border-color:var(--mg)}
+.chip.mast{border-color:var(--lm);box-shadow:0 0 14px #b8ff2e44}
+.mt{width:70%;height:5px;border-radius:3px;background:#2a2a42;overflow:hidden}
+.mt i{display:block;height:100%;background:linear-gradient(90deg,var(--mg),var(--cy))}
+.cta{width:100%;padding:14px;border-radius:14px;border:0;font-weight:800;font-size:1.05rem;color:#07070d;background:linear-gradient(90deg,var(--cy),var(--mg))}
+#pick{display:flex;flex-direction:column}
+.cap{display:block;font-family:-apple-system,system-ui,sans-serif;font-size:.9rem;font-weight:600;color:var(--mut);margin-bottom:10px;text-shadow:none}
+.am{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.amc{--k:var(--cy);display:grid;gap:14px;justify-items:stretch}
+.amb{border:2px solid var(--k);border-radius:16px;padding:14px 8px;box-shadow:0 0 22px color-mix(in srgb,var(--k) 40%,transparent),inset 0 0 18px color-mix(in srgb,var(--k) 15%,transparent)}
+.amb span{display:block;font-family:-apple-system,system-ui,sans-serif;font-size:1rem;font-weight:700;color:var(--k);text-shadow:none}
+.amc b{font-size:2.8rem;text-shadow:0 0 20px var(--k)}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}#glow.on,.pop,#opts button.good{animation:none}}
 </style>
 </head>
@@ -84,15 +103,22 @@ h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em;background:line
 <div class="wrap">
   <section id="home">
     <h1>Sharpen</h1>
-    <p class="sub">A few minutes a day. Hit 100 points.</p>
+    <p class="sub">A few minutes a day. Clear all five goals.</p>
     <div class="card" style="margin-top:16px">
-      <div class="big"><b id="pn">0</b><span>/ 100</span></div>
+      <div class="big"><b id="pn">0</b><span>/ 5 goals today</span></div>
       <div class="bar"><i id="hfill"></i></div>
       <div class="row"><span id="gmsg"></span><span class="st" id="strk"></span></div>
       <p class="warm" id="warm" hidden>New day. Questions start one notch easier so you can warm up.</p>
     </div>
     <div class="tiles" id="tiles" style="margin-top:16px"></div>
     <div class="foot"><button class="ghost" id="vib"></button></div>
+  </section>
+
+  <section id="pick" hidden>
+    <div class="top"><button class="ghost" id="pback" aria-label="Back to home">✕</button><div style="font-weight:700;color:var(--mg);flex:1">Multiplication</div></div>
+    <p class="sub" style="margin-top:14px">Pick a table to drill. The bar shows your last 10 answers on it.</p>
+    <div class="chips" id="chips"></div>
+    <button class="cta" id="surp">Surprise me: my weakest table</button>
   </section>
 
   <section id="quiz" hidden>
@@ -107,7 +133,7 @@ h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em;background:line
 
 <div id="goal" hidden>
   <div class="card">
-    <h2>Daily goal hit</h2>
+    <h2 id="gt">Daily goal hit</h2>
     <p id="gtxt"></p>
     <button class="main" id="keep">Keep going</button>
     <button id="done">Done for today</button>
@@ -147,13 +173,43 @@ neg(l){
     (Math.sign(a)===Math.sign(c)?'Same signs: add the sizes and keep the sign.':'Different signs: subtract the sizes and keep the sign of the bigger one.');
   return mk(`${sg(a)} ${op} ${pr(b)}`,sg(v),[sg(flip),sg(-v),sg(v+2),sg(v-2),sg(v+10)],why,i=>sg(v+(i%2?i+2:-(i+2))));
 },
-mul(l){
-  const m=[6,9,12][l-1],p=[.2,.35,.5][l-1];
-  const a=R(2,m),b=R(2,m);let sa=a,sb=b;
-  if(Math.random()<p){const r=Math.random();if(r<.4)sa=-a;else if(r<.8)sb=-b;else{sa=-a;sb=-b}}
+mul(l,n){
+  const p=[.15,.3,.5][l-1],m=R(2,12);let sa=n,sb=m;
+  if(Math.random()<p){const r=Math.random();if(r<.4)sa=-n;else if(r<.8)sb=-m;else{sa=-n;sb=-m}}
+  if(l>1&&Math.random()<.5)[sa,sb]=[sb,sa];
   const v=sa*sb,s=v<0?-1:1,neg=sa<0||sb<0;
-  const why=`${a} × ${b} = ${a*b}.`+(neg?` ${v<0?'Different signs → negative':'Two negatives → positive'}: ${sg(v)}.`:'');
-  return mk(`${sg(sa)} × ${pr(sb)}`,sg(v),[sg(-v),sg(s*(a+1)*b),sg(s*a*(b+1)),sg(s*(a-1)*b),sg(s*a*(b-1))],why,i=>sg(v+(i%2?i:-i)));
+  const why=`${n} × ${m} = ${n*m}.`+(neg?` ${v<0?'Different signs → negative':'Two negatives → positive'}: ${sg(v)}.`:'');
+  const r=mk(`${sg(sa)} × ${pr(sb)}`,sg(v),[sg(-v),sg(s*(n+1)*m),sg(s*n*(m+1)),sg(s*(n-1)*m),sg(s*n*(m-1))],why,i=>sg(v+(i%2?i:-i)));
+  r.tbl=n;return r;
+},
+gcf(l){
+  const gd=(a,b)=>b?gd(b,a%b):a;
+  const type=pick(['num','var','both','both','nv']),k=l===3&&type!=='nv'&&Math.random()<.5?3:2;
+  const g=R(2,[6,9,12][l-1]),lim=[4,5,6][l-1];
+  let ms;do{ms=Array.from({length:k},()=>R(1,lim))}while(ms.reduce(gd)!==1||new Set(ms).size<k);
+  const ex=Array.from({length:k},()=>R(1,l+1)),useY=Math.random()<.7;
+  const ey=Array.from({length:k},()=>useY?R(0,l+1):0);if(useY&&ey.every(v=>!v))ey[0]=1;
+  const gx=Math.min(...ex),gy=Math.min(...ey),mx=Math.max(...ex),my=Math.max(...ey);
+  let ts,A,W,why='';const cos=ms.map(m=>g*m);
+  if(type==='num'){ts=cos.map(sg);A=mono(g);W=[mono(g*2),mono(g+1),mono(Math.max(1,g-1)),mono(g*ms.reduce((a,b)=>a*b,1))];why=`Biggest number that divides ${cos.join(', ')}: ${g}.`}
+  else if(type==='var'){ts=ex.map((e,i)=>mono(1,e,ey[i]));A=mono(1,gx,gy);W=[mono(1,mx,my),mono(1,gx+1,gy),mono(1,gx,my),mono(1,gx,gy+1)];why=`A letter only counts if every term has it, at the smallest exponent: ${A}.`}
+  else if(type==='both'){ts=ex.map((e,i)=>mono(cos[i],e,ey[i]));A=mono(g,gx,gy);W=[mono(g),mono(1,gx,gy),mono(g*2,gx,gy),mono(g,mx,my),mono(g,gx+1,gy),mono(g,gx,my)];why=`Numbers: biggest that divides ${cos.join(', ')} is ${g}. Letters: only those in every term, smallest exponent → ${mono(1,gx,gy)}.`}
+  else{ts=shuf([mono(cos[0],ex[0],ey[0]),sg(cos[1])]);A=mono(g);W=[mono(g,ex[0],ey[0]),mono(g*2),mono(1),mono(g+1)];why=`Biggest number that divides ${cos[0]} and ${cos[1]} is ${g}. One term is a plain number with no letters, so no letters go in the GCF.`}
+  const list=ts.length===2?ts.join(' and '):ts.slice(0,-1).join(', ')+' and '+ts[2];
+  return mk(`<span class="cap">Greatest common factor of</span>${list}`,A,W,why,i=>mono(g+i,gx,gy));
+},
+am(l){
+  const lim=[9,12,15][l-1],pn=[0,.5,.8][l-1];
+  let a=R(1,lim),b=R(1,lim);
+  if(Math.random()<pn){const r=Math.random();if(r<.35)a=-a;else if(r<.7)b=-b;else{a=-a;b=-b}}
+  const s=a+b,p=a*b,ps=(x,y)=>x<=y?`${sg(x)} and ${sg(y)}`:`${sg(y)} and ${sg(x)}`;
+  const g1=[],g2=[];
+  for(let d=1;d<=Math.abs(p);d++)if(p%d===0)[[d,p/d],[-d,-p/d]].forEach(([x,y])=>{if(x+y!==s)g1.push(ps(x,y))});
+  for(let x=-lim;x<=lim;x++){const y=s-x;if(x&&y&&x*y!==p)g2.push(ps(x,y))}
+  const tip=p>0?(s>0?'Product positive and sum positive: both numbers are positive.':'Product positive and sum negative: both numbers are negative.'):'Product negative: one number is negative, and the bigger one takes the sign of the sum.';
+  const why=`${sg(a)} × ${pr(b)} = ${sg(p)} and ${sg(a)} + ${pr(b)} = ${sg(s)}. ${tip}`;
+  const q=`<div class="am"><div class="amc" style="--k:var(--cy)"><div class="amb"><span>Add to get:</span></div><b>${sg(s)}</b></div><div class="amc" style="--k:var(--mg)"><div class="amb"><span>Multiply to get:</span></div><b>${sg(p)}</b></div></div>`;
+  return mk(q,ps(a,b),[...shuf(g1).slice(0,2),...shuf(g2).slice(0,2)],why,i=>ps(a+i,b+i));
 },
 exp(l){
   const T={
@@ -172,15 +228,16 @@ exp(l){
 }};
 
 /* ---------- state ---------- */
-const PTS={neg:2,mul:5,exp:10},GOAL=100;
-const NAME={neg:'Negatives',mul:'Multiplication',exp:'Exponents',mix:'Mixed'};
-const COL={neg:'var(--cy)',mul:'var(--mg)',exp:'var(--lm)',mix:'var(--pu)'};
+const TOP=['neg','mul','exp','gcf','am'],GOALS={neg:50,mul:150,exp:80,gcf:150,am:150},PT=10;
+const NAME={neg:'Negatives',mul:'Multiplication',exp:'Exponents',gcf:'Greatest common factor',am:'Add and Multiply',mix:'Mixed'};
+const COL={neg:'var(--cy)',mul:'var(--mg)',exp:'var(--lm)',gcf:'var(--or)',am:'var(--bl)',mix:'var(--pu)'};
 const dstr=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const TODAY=dstr(new Date()),yd=new Date();yd.setDate(yd.getDate()-1);const YEST=dstr(yd);
-let S={date:TODAY,pts:0,lv:{neg:1,mul:1,exp:1},streak:0,lastGoal:'',goalHit:false,vib:true},warm=false,o=null;
+const z=()=>({neg:0,mul:0,exp:0,gcf:0,am:0}),LV=()=>({neg:1,mul:1,exp:1,gcf:1,am:1});
+let S={date:TODAY,p:z(),hit:{},all:false,lv:LV(),ms:{},streak:0,lastGoal:'',vib:true},warm=false,o=null;
 try{o=JSON.parse(localStorage.getItem('sharpen.v1')||'null')}catch(e){}
-if(o){S=Object.assign(S,o);S.lv=Object.assign({neg:1,mul:1,exp:1},o.lv)}
-if(o&&o.date!==TODAY){warm=true;for(const k in S.lv)S.lv[k]=Math.max(1,S.lv[k]-1);S.pts=0;S.goalHit=false;S.date=TODAY}
+if(o){S=Object.assign(S,o);S.lv=Object.assign(LV(),o.lv);S.p=Object.assign(z(),o.p);S.hit=o.hit||{};S.ms=o.ms||{}}
+if(o&&o.date!==TODAY){warm=true;for(const k in S.lv)S.lv[k]=Math.max(1,S.lv[k]-1);S.p=z();S.hit={};S.all=false;S.date=TODAY}
 if(S.lastGoal&&S.lastGoal!==TODAY&&S.lastGoal!==YEST)S.streak=0;
 const save=()=>{try{localStorage.setItem('sharpen.v1',JSON.stringify(S))}catch(e){}};
 save();
@@ -208,57 +265,74 @@ const buzz=n=>{if(S.vib&&navigator.vibrate)try{navigator.vibrate(n)}catch(e){}};
 
 /* ---------- home ---------- */
 const pips=t=>`<span class="pips" style="--c:${COL[t]}">${[1,2,3].map(i=>`<b class="${i<=S.lv[t]?'on':''}"></b>`).join('')}</span>`;
-const TILES=[['neg','Add and subtract with negatives','2 pts'],['mul','Times tables up to 12 × 12','5 pts'],['exp','Distributing and combining exponents','10 pts'],['mix','All three, evenly mixed','2 / 5 / 10 pts']];
+const DESC={neg:'Add and subtract with negatives',mul:'One times table at a time, 5 to 12',exp:'Distributing and combining exponents',gcf:'Numbers, variables, and both',am:'Find the pair for factoring',mix:'All five, evenly mixed'};
+const doneN=()=>TOP.filter(t=>S.hit[t]).length;
+const rec=(n,ok)=>{S.ms[n]=((S.ms[n]||[]).concat(ok)).slice(-10)};
+const msr=n=>{const a=S.ms[n]||[];return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
+const show=id=>['home','pick','quiz'].forEach(k=>{$('#'+k).hidden=k!==id});
 function home(){
-  $('#pn').textContent=Math.min(S.pts,GOAL);
-  $('#hfill').style.width=Math.min(100,S.pts/GOAL*100)+'%';
-  $('#gmsg').textContent=S.goalHit?'Goal done. Extra points are bonus.':`${Math.max(0,GOAL-S.pts)} points to go`;
+  const n=doneN(),tot=TOP.reduce((a,t)=>a+GOALS[t],0),got=TOP.reduce((a,t)=>a+Math.min(S.p[t],GOALS[t]),0);
+  $('#pn').textContent=n;
+  $('#hfill').style.width=got/tot*100+'%';
+  $('#gmsg').textContent=n===5?'All five done. Streak locked in.':`${5-n} goal${n===4?'':'s'} to go`;
   $('#strk').textContent=S.streak?`${S.streak}-day streak`:'Start a streak today';
-  $('#warm').hidden=!(warm&&S.pts===0);
-  $('#tiles').innerHTML=TILES.map(([t,d,p])=>`<button class="tile" data-m="${t}" style="--c:${COL[t]}"><strong>${NAME[t]}${t==='mix'?'':pips(t)}</strong><small>${d}</small><span class="pt">${p}</span></button>`).join('');
+  $('#warm').hidden=!(warm&&got===0);
+  $('#tiles').innerHTML=[...TOP,'mix'].map(t=>{
+    if(t==='mix')return `<button class="tile" data-m="mix" style="--c:${COL.mix}"><strong>Mixed</strong><small>${DESC.mix}</small></button>`;
+    const d=S.hit[t];
+    return `<button class="tile${d?' done':''}" data-m="${t}" style="--c:${COL[t]}"><strong>${NAME[t]}${pips(t)}</strong><small>${DESC[t]}</small><span class="pt">${d?'Done':S.p[t]+' / '+GOALS[t]}</span><span class="tb"><i style="width:${Math.min(100,S.p[t]/GOALS[t]*100)}%"></i></span></button>`}).join('');
   $('#vib').textContent='Vibration: '+(S.vib?'on':'off');
 }
-$('#tiles').addEventListener('click',e=>{const b=e.target.closest('.tile');if(b)start(b.dataset.m)});
+function picker(){
+  $('#chips').innerHTML=[5,6,7,8,9,10,11,12].map(n=>{const m=msr(n);return `<button class="chip${m!==null&&(S.ms[n]||[]).length>=8&&m>=.9?' mast':''}" data-n="${n}"><b>${n}s</b><span class="mt"><i style="width:${m===null?0:m*100}%"></i></span></button>`}).join('');
+  show('pick');
+}
+$('#tiles').addEventListener('click',e=>{const b=e.target.closest('.tile');if(!b)return;b.dataset.m==='mul'?picker():start(b.dataset.m)});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)start('mul',+b.dataset.n)});
+$('#surp').onclick=()=>{const n=[5,6,7,8,9,10,11,12].map(n=>[((S.ms[n]||[]).length<3?.5:msr(n))+Math.random()*.01,n]).sort((a,b)=>a[0]-b[0])[0][1];start('mul',n)};
+$('#pback').onclick=()=>show('home');
 $('#vib').onclick=()=>{S.vib=!S.vib;save();home();if(S.vib)buzz(30)};
-const show=id=>{$('#home').hidden=id!=='home';$('#quiz').hidden=id!=='quiz'};
 
 /* ---------- quiz ---------- */
 let cur=null,qd=null,bag=[];
-function start(m){cur={m,combo:0,cs:{neg:0,mul:0,exp:0},ws:{neg:0,mul:0,exp:0},t:null,lock:false};bag=[];show('quiz');window.scrollTo(0,0);nextQ()}
+function start(m,n){cur={m,tbl:n||0,combo:0,cs:z(),ws:z(),t:null,lock:false};bag=[];show('quiz');window.scrollTo(0,0);nextQ()}
 function nextQ(){
-  let t=cur.m;if(t==='mix'){if(!bag.length)bag=shuf(['neg','mul','exp']);t=bag.pop()}
-  cur.t=t;qd=G[t](S.lv[t]);cur.lock=false;
+  let t=cur.m;if(t==='mix'){if(!bag.length)bag=shuf(TOP);t=bag.pop()}
+  cur.t=t;qd=G[t](S.lv[t],t==='mul'?(cur.tbl||R(5,12)):0);cur.lock=false;
   $('#quiz').style.setProperty('--c',COL[t]);
-  $('#tname').textContent=NAME[t];
+  $('#tname').textContent=NAME[t]+(t==='mul'&&cur.tbl?` · ${cur.tbl}s`:'');
   $('#q').innerHTML=qd.q;
   $('#opts').className='';
   $('#opts').innerHTML=qd.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('');
   $('#fb').hidden=true;qbar();
 }
-function mult(){return cur.combo>=5?3:cur.combo>=3?2:1}
 function qbar(){
-  $('#qfill').style.width=Math.min(100,S.pts/GOAL*100)+'%';
-  $('#qpts').textContent=`${Math.min(S.pts,GOAL)} / ${GOAL}`;
-  $('#combo').textContent=cur.combo>=2?`${cur.combo} in a row`+(mult()>1?` · ×${mult()} points`:''):'';
-  $('#tlv').innerHTML=pips(cur.t);
+  const t=cur.t,p=S.p[t],g=GOALS[t];
+  $('#qfill').style.width=Math.min(100,p/g*100)+'%';
+  $('#qpts').textContent=`${Math.min(p,g)} / ${g}`;
+  $('#combo').textContent=cur.combo>=2?`${cur.combo} in a row`:'';
+  $('#tlv').innerHTML=pips(t);
 }
 $('#opts').addEventListener('click',e=>{const b=e.target.closest('button');if(b)answer(+b.dataset.i,b)});
 function answer(i,btn){
   if(cur.lock)return;cur.lock=true;
   const t=cur.t,ok=i===qd.c,bs=[...$('#opts').children];
   $('#opts').classList.add('locked');
+  if(t==='mul')rec(qd.tbl,ok?1:0);
   if(ok){
-    cur.combo++;cur.ws[t]=0;
-    const mu=mult(),p=PTS[t]*mu;S.pts+=p;
+    cur.combo++;cur.ws[t]=0;S.p[t]+=PT;
     btn.classList.add('good');
     const r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
-    burst(x,y,26+mu*14);pop(x,y,'+'+p);flash();buzz(25);
+    burst(x,y,26+Math.min(cur.combo,6)*8);pop(x,y,'+'+PT);flash();buzz(25);
     if(++cur.cs[t]>=3){cur.cs[t]=0;if(S.lv[t]<3){S.lv[t]++;toast('Level up')}}
-    else if(cur.combo===3)toast('Combo: double points');
-    else if(cur.combo===5)toast('Combo: triple points');
+    else if(cur.combo===3)toast('Heating up');
+    else if(cur.combo===5)toast('On fire');
+    else if(cur.combo===10)toast('Unstoppable');
     const tok=cur;
-    if(!S.goalHit&&S.pts>=GOAL){
-      S.goalHit=true;S.streak=S.lastGoal===YEST?S.streak+1:1;S.lastGoal=TODAY;save();qbar();setTimeout(()=>{if(cur===tok)goal()},650);return;
+    if(!S.hit[t]&&S.p[t]>=GOALS[t]){
+      S.hit[t]=true;let all=false;
+      if(TOP.every(k=>S.hit[k])&&!S.all){S.all=true;all=true;S.streak=S.lastGoal===YEST?S.streak+1:1;S.lastGoal=TODAY}
+      save();qbar();setTimeout(()=>{if(cur===tok)goal(t,all)},650);return;
     }
     save();qbar();
     setTimeout(()=>{if(cur===tok&&!$('#quiz').hidden)nextQ()},950);
@@ -274,11 +348,12 @@ function answer(i,btn){
 $('#next').onclick=()=>nextQ();
 $('#back').onclick=()=>{cur=null;home();show('home')};
 
-/* ---------- daily goal ---------- */
-function goal(){
-  $('#gtxt').textContent=S.streak>1?`${S.streak} days in a row. Keep it alive tomorrow.`:'Streak started. Come back tomorrow to keep it going.';
+/* ---------- goals ---------- */
+function goal(t,all){
+  $('#gt').textContent=all?'All five goals done':NAME[t]+' goal hit';
+  $('#gtxt').textContent=all?(S.streak>1?`${S.streak} days in a row. Keep it alive tomorrow.`:'Streak started. Come back tomorrow to keep it going.'):`${doneN()} of 5 goals done today.`;
   $('#goal').hidden=false;
-  [0,250,500,750].forEach(d=>setTimeout(()=>burst(R(60,W-60),R(80,H*.45),70),d));buzz([40,60,40]);
+  [0,250,500,750].slice(0,all?4:2).forEach(d=>setTimeout(()=>burst(R(60,W-60),R(80,H*.45),all?80:60),d));buzz([40,60,40]);
 }
 $('#keep').onclick=()=>{$('#goal').hidden=true;if(cur)nextQ()};
 $('#done').onclick=()=>{$('#goal').hidden=true;cur=null;home();show('home')};
